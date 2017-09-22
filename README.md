@@ -1,6 +1,6 @@
 # Air Simulator
 
-Visualise air pressure waves
+Visualize air pressure waves
 
 a grid represents the space.
 
