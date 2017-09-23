@@ -19,54 +19,139 @@ function pressureToColor(value, range){
 	}
 }
 
+function pos(value){
+	if(value > 0) {return value};
+	return 0;
+}
+
 function setup(){
 	var c = document.getElementById("airspace");
 	var ctx = c.getContext("2d");
 
 	var grid = [];
-	var width = 10;
+	var width = 5;
 	var hunit = parseInt(c.width)/width;
-	var height = 10;
+	var height = 5;
 	var vunit = parseInt(c.height)/height;
-	var pressureRange = 100;
+	var pressureRange = 1000;
 
-	for (var i = 0; i < width; i++){
+	for(var i = 0; i < width; i++){
 		grid[i] = [];
-		for (var j = 0; j < height; j++){
-			grid[i][j] = Math.random()*pressureRange;
-
-			ctx.fillStyle = pressureToColor(grid[i][j], pressureRange);
-			ctx.fillRect((i*hunit), (j*vunit), hunit-2, vunit-2);
-
-			ctx.font="20px Georgia";
-
-			ctx.fillStyle = "black";
-			ctx.fillText(""+Math.floor(grid[i][j]), (i*hunit), ((j+1)*vunit)-vunit/3);
+		for(var j = 0; j < height; j++){
+		grid[i][j] = Math.random()*pressureRange;
 		}
 	}
 
-	window.onclick = function(){stepFrame()};
+	render();
+	function render(){
+		for (var i = 0; i < width; i++){
+			for (var j = 0; j < height; j++){
+				var currentSquare = grid[i][j];
+
+				ctx.fillStyle = pressureToColor(grid[i][j], pressureRange);
+				ctx.fillRect((i*hunit), (j*vunit), hunit, vunit);
+
+				ctx.font="20px Georgia";
+				ctx.fillStyle = "black";
+				ctx.fillText(""+Math.floor(grid[i][j]), (i*hunit), ((j+1)*vunit)-vunit/3);
+			}
+		}
+	}
+
+	window.onclick = function(){
+		stepFrame();
+		render();
+	};
+
+	function update(){
+		stepFrame();
+		render();
+		window.requestAnimationFrame(update);
+	}
+	//window.requestAnimationFrame(update);
 
 	function stepFrame(){
-		//var gridChanges = grid.clone // clone doesn't exist, but deepclone the array and apply the changes at the end of the frame
+
+		// make a new grid to hold the changes
+		var gridChanges = [];
+		for (var i = 0; i < width; i++){
+			gridChanges[i] =[];
+			for (var j = 0; j < height; j++){
+				gridChanges[i][j] = 0;
+			}
+		}
 
 		for (var i = 0; i < width; i++){
 			for (var j = 0; j < height; j++){
-				var ndiff = (j == 0) ? null : grid[i][j] - grid[i][j-1];
-				var sdiff = (j == height-1) ? null : grid[i][j] - grid[i][j+1];
-				var ediff = (i == width-1) ? null : grid[i][j] - grid[i+1][j];
-				var wdiff = (i == 0) ? null : grid[i][j] - grid[i-1][j];
-				var nediff = (j == 0 || i == width-1) ? null : grid[i][j] - grid[i+1][j-1];
-				var sediff = (j == height-1 || i == width-1) ? null : grid[i][j] - grid[i+1][j+1];
-				var nwdiff = (j == 0 || i == 0) ? null : grid[i][j] - grid[i-1][j-1];
-				var swdiff = (j == height-1 || i == 0) ? null : grid[i][j] - grid[i-1][j+1];
-				
-				// figure out how to distribute pressure
-				// mark changes in the gridChanges array
 
+				if(j == 0){
+					//north is out of bounds and south is in bounds // assumes a grid with width and height > 1
+					
+					// south is in bounds
+					gridChanges[i][j+1] += 1;
+					gridChanges[i][j] -= 1;
+					if(i == 0){ // east is in bounds and west is out of bounds
+						
+						// east and southeast are in bounds
+						
+						// east
+						gridChanges[i+1][j] += 1;
+						gridChanges[i][j] -= 1;
+
+						//southeast
+						gridChanges[i+1][j+1] += 1;
+						gridChanges[i][j] -= 1;
+					}else if(i == width-1){
+						// west and southwest are in bounds
+
+						//west
+						gridChanges[i-1][j] += 1;
+						gridChanges[i][j] -= 1;
+
+						//southwest
+						gridChanges[i-1][j+1] += 1;
+						gridChanges[i][j] -= 1;
+
+					}
+				}else if (j == height-1){
+					//south is out of bounds and north is in bounds // assumes a grid with width and height > 1
+					
+					// north is in bounds
+					gridChanges[i][j-1] += 1;
+					gridChanges[i][j] -= 1;
+
+					if(i == 0){
+						// east and northeast are in bounds
+						
+						// east
+						gridChanges[i+1][j] += 1;
+						gridChanges[i][j] -= 1;
+
+						//northeast
+						gridChanges[i+1][j-1] += 1;
+						gridChanges[i][j] -= 1;
+					}
+					if(i == width-1){
+						// west and northwest are in bounds
+
+						//west
+						gridChanges[i-1][j] += 1;
+						gridChanges[i][j] -= 1;
+
+						//northwest
+						gridChanges[i-1][j-1] += 1;
+						gridChanges[i][j] -= 1;
+					}
+				}
 			}
 		}
+
 		// apply the changes from the gridChanges array to the real grid
+		for(var i = 0; i < width; i++){
+			for(var j = 0; j < height; j++){
+				grid[i][j] += gridChanges[i][j];
+			}
+		}
 	}
 }
 
