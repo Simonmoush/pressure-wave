@@ -29,11 +29,11 @@ function setup(){
 	var ctx = c.getContext("2d");
 
 	var grid = [];
-	var width = 5;
+	var width = 10;
 	var hunit = parseInt(c.width)/width;
-	var height = 5;
+	var height = 10;
 	var vunit = parseInt(c.height)/height;
-	var pressureRange = 1000;
+	var pressureRange = 10;
 
 	for(var i = 0; i < width; i++){
 		grid[i] = [];
@@ -88,59 +88,78 @@ function setup(){
 					//north is out of bounds and south is in bounds // assumes a grid with width and height > 1
 					
 					// south is in bounds
-					gridChanges[i][j+1] += 1;
-					gridChanges[i][j] -= 1;
-					if(i == 0){ // east is in bounds and west is out of bounds
+					if(grid[i][j+1] < grid[i][j]){
+						// south is lower pressure than current
+						gridChanges[i][j+1] += 1;
+						gridChanges[i][j] -= 1;
+					}
+					if(i == 0){ // east is in bounds and west is out of bounds TODO FIX
 						
 						// east and southeast are in bounds
 						
 						// east
-						gridChanges[i+1][j] += 1;
-						gridChanges[i][j] -= 1;
+						if(grid[i+1][j] < grid[i][j]){
+							gridChanges[i+1][j] += 1;
+							gridChanges[i][j] -= 1;
+						}
 
 						//southeast
-						gridChanges[i+1][j+1] += 1;
-						gridChanges[i][j] -= 1;
+						if(grid[i+1][j+1] < grid[i][j]){
+							gridChanges[i+1][j+1] += 1;
+							gridChanges[i][j] -= 1;
+						}
 					}else if(i == width-1){
 						// west and southwest are in bounds
 
 						//west
-						gridChanges[i-1][j] += 1;
-						gridChanges[i][j] -= 1;
+						if(grid[i-1][j] < grid[i][j]){
+							gridChanges[i-1][j] += 1;
+							gridChanges[i][j] -= 1;
+						}
 
 						//southwest
-						gridChanges[i-1][j+1] += 1;
-						gridChanges[i][j] -= 1;
-
+						if(grid[i-1][j+1] < grid[i][j]){
+							gridChanges[i-1][j+1] += 1;
+							gridChanges[i][j] -= 1;
+						}
 					}
 				}else if (j == height-1){
 					//south is out of bounds and north is in bounds // assumes a grid with width and height > 1
 					
 					// north is in bounds
-					gridChanges[i][j-1] += 1;
-					gridChanges[i][j] -= 1;
+					if(grid[i][j-1] < grid[i][j]){
+						gridChanges[i][j-1] += 1;
+						gridChanges[i][j] -= 1;
+					}
 
 					if(i == 0){
 						// east and northeast are in bounds
 						
 						// east
-						gridChanges[i+1][j] += 1;
-						gridChanges[i][j] -= 1;
+						if(grid[i+1][j] < grid[i][j]){
+							gridChanges[i+1][j] += 1;
+							gridChanges[i][j] -= 1;
+						}
 
 						//northeast
-						gridChanges[i+1][j-1] += 1;
-						gridChanges[i][j] -= 1;
-					}
-					if(i == width-1){
+						if(grid[i+1][j-1] < grid[i][j]){
+							gridChanges[i+1][j-1] += 1;
+							gridChanges[i][j] -= 1;
+						}
+					}else if(i == width-1){
 						// west and northwest are in bounds
 
 						//west
-						gridChanges[i-1][j] += 1;
-						gridChanges[i][j] -= 1;
+						if(grid[i-1][j] < grid[i][j]){
+							gridChanges[i-1][j] += 1;
+							gridChanges[i][j] -= 1;
+						}
 
 						//northwest
-						gridChanges[i-1][j-1] += 1;
-						gridChanges[i][j] -= 1;
+						if(grid[i-1][j-1] < grid[i][j]){
+							gridChanges[i-1][j-1] += 1;
+							gridChanges[i][j] -= 1;
+						}
 					}
 				}
 			}
