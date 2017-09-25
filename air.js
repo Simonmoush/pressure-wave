@@ -33,12 +33,12 @@ function setup(){
 	var hunit = parseInt(c.width)/width;
 	var height = 10;
 	var vunit = parseInt(c.height)/height;
-	var pressureRange = 10;
+	var pressureRange = 1000;
 
 	for(var i = 0; i < width; i++){
 		grid[i] = [];
 		for(var j = 0; j < height; j++){
-		grid[i][j] = Math.random()*pressureRange;
+		grid[i][j] = pressureRange/2;
 		}
 	}
 
@@ -46,31 +46,51 @@ function setup(){
 	function render(){
 		for (var i = 0; i < width; i++){
 			for (var j = 0; j < height; j++){
-				var currentSquare = grid[i][j];
 
 				ctx.fillStyle = pressureToColor(grid[i][j], pressureRange);
 				ctx.fillRect((i*hunit), (j*vunit), hunit, vunit);
-
+				
+				
 				ctx.font="20px Georgia";
 				ctx.fillStyle = "black";
 				ctx.fillText(""+Math.floor(grid[i][j]), (i*hunit), ((j+1)*vunit)-vunit/3);
+				
+
 			}
 		}
 	}
 
+	c.addEventListener("mousedown", highPressure);
+	c.addEventListener("mouseup", lowPressure);
+
+	function highPressure(event){
+		grid[Math.floor(event.pageX/hunit)][Math.floor(event.pageY/vunit)] = pressureRange;
+	}
+
+	function lowPressure(event){
+		grid[Math.floor(event.pageX/hunit)][Math.floor(event.pageY/vunit)] = 0;
+	}
+
+	/*
 	window.onclick = function(){
 		stepFrame();
 		render();
 	};
+	*/
 
 	function update(){
 		stepFrame();
 		render();
 		window.requestAnimationFrame(update);
 	}
-	//window.requestAnimationFrame(update);
+	window.requestAnimationFrame(update);
 
+
+	//TODO figure out how the propagation should happen
 	function stepFrame(){
+		var maxDiff = pressureRange;
+		var rate = .3;
+		var loss = .8;
 
 		// make a new grid to hold the changes
 		var gridChanges = [];
@@ -80,86 +100,35 @@ function setup(){
 				gridChanges[i][j] = 0;
 			}
 		}
-
 		for (var i = 0; i < width; i++){
 			for (var j = 0; j < height; j++){
-
-				if(j == 0){
-					//north is out of bounds and south is in bounds // assumes a grid with width and height > 1
-					
-					// south is in bounds
-					if(grid[i][j+1] < grid[i][j]){
-						// south is lower pressure than current
-						gridChanges[i][j+1] += 1;
-						gridChanges[i][j] -= 1;
+			var current = grid[i][j];
+				if(j != height-1){
+					// south
+					if(grid[i][j+1] < current){
+						gridChanges[i][j+1] += Math.min(rate*(current - grid[i][j+1]), maxDiff)*loss;
+						gridChanges[i][j] -= Math.min(rate*(current - grid[i][j+1]), maxDiff)*loss;
 					}
-					if(i == 0){ // east is in bounds and west is out of bounds TODO FIX
-						
-						// east and southeast are in bounds
-						
-						// east
-						if(grid[i+1][j] < grid[i][j]){
-							gridChanges[i+1][j] += 1;
-							gridChanges[i][j] -= 1;
-						}
-
-						//southeast
-						if(grid[i+1][j+1] < grid[i][j]){
-							gridChanges[i+1][j+1] += 1;
-							gridChanges[i][j] -= 1;
-						}
-					}else if(i == width-1){
-						// west and southwest are in bounds
-
-						//west
-						if(grid[i-1][j] < grid[i][j]){
-							gridChanges[i-1][j] += 1;
-							gridChanges[i][j] -= 1;
-						}
-
-						//southwest
-						if(grid[i-1][j+1] < grid[i][j]){
-							gridChanges[i-1][j+1] += 1;
-							gridChanges[i][j] -= 1;
-						}
+				}
+				if (j != 0){
+					// north
+					if(grid[i][j-1] < current){
+						gridChanges[i][j-1] += Math.min(rate*(current - grid[i][j-1]), maxDiff)*loss;
+						gridChanges[i][j] -= Math.min(rate*(current - grid[i][j-1]), maxDiff)*loss;
 					}
-				}else if (j == height-1){
-					//south is out of bounds and north is in bounds // assumes a grid with width and height > 1
-					
-					// north is in bounds
-					if(grid[i][j-1] < grid[i][j]){
-						gridChanges[i][j-1] += 1;
-						gridChanges[i][j] -= 1;
+				}
+				if(i != width-1){ 
+					// east
+					if(grid[i+1][j] < current){
+						gridChanges[i+1][j] += Math.min(rate*(current - grid[i+1][j]), maxDiff)*loss;
+						gridChanges[i][j] -= Math.min(rate*(current - grid[i+1][j]), maxDiff)*loss;
 					}
-
-					if(i == 0){
-						// east and northeast are in bounds
-						
-						// east
-						if(grid[i+1][j] < grid[i][j]){
-							gridChanges[i+1][j] += 1;
-							gridChanges[i][j] -= 1;
-						}
-
-						//northeast
-						if(grid[i+1][j-1] < grid[i][j]){
-							gridChanges[i+1][j-1] += 1;
-							gridChanges[i][j] -= 1;
-						}
-					}else if(i == width-1){
-						// west and northwest are in bounds
-
-						//west
-						if(grid[i-1][j] < grid[i][j]){
-							gridChanges[i-1][j] += 1;
-							gridChanges[i][j] -= 1;
-						}
-
-						//northwest
-						if(grid[i-1][j-1] < grid[i][j]){
-							gridChanges[i-1][j-1] += 1;
-							gridChanges[i][j] -= 1;
-						}
+				}
+				if(i != 0){
+					// west
+					if(grid[i-1][j] < current){
+						gridChanges[i-1][j] += Math.min(rate*(current - grid[i-1][j]), maxDiff)*loss;
+						gridChanges[i][j] -= Math.min(rate*(current - grid[i-1][j]), maxDiff)*loss;
 					}
 				}
 			}
@@ -169,6 +138,8 @@ function setup(){
 		for(var i = 0; i < width; i++){
 			for(var j = 0; j < height; j++){
 				grid[i][j] += gridChanges[i][j];
+				if(grid[i][j] < 0){ grid[i][j] = 0;}
+				if(grid[i][j] > pressureRange){ grid[i][j] = pressureRange;}
 			}
 		}
 	}
