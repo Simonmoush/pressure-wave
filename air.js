@@ -8,13 +8,13 @@ function pressureToColor(value, range){
 	var green = 0;
 	if (value > range/2){
 		red = 255;
-		blue = value.map(range/2, range, 255, 0);
-		green = value.map(range/2, range, 255, 0);
+		blue = value.map(range/2, .52*range, 255, 0);
+		green = value.map(range/2, .52*range, 255, 0);
 		return "rgb(" + red + ", " + green + ", " + blue + ")";
 	}else{
 		blue = 255;
-		red = value.map(0, range/2, 0, 255);
-		green = value.map(0, range/2, 0, 255);
+		red = value.map(range*.48, range/2, 0, 255);
+		green = value.map(range*.48, range/2, 0, 255);
 		return "rgb(" + red + ", " + green + ", " + blue + ")";
 	}
 }
@@ -29,9 +29,9 @@ function setup(){
 	var ctx = c.getContext("2d");
 
 	var grid = [];
-	var width = 10;
+	var width = 100;
 	var hunit = parseInt(c.width)/width;
-	var height = 10;
+	var height = 100;
 	var vunit = parseInt(c.height)/height;
 	var pressureRange = 1000;
 
@@ -50,10 +50,11 @@ function setup(){
 				ctx.fillStyle = pressureToColor(grid[i][j], pressureRange);
 				ctx.fillRect((i*hunit), (j*vunit), hunit, vunit);
 				
-				
+				/*
 				ctx.font="20px Georgia";
 				ctx.fillStyle = "black";
 				ctx.fillText(""+Math.floor(grid[i][j]), (i*hunit), ((j+1)*vunit)-vunit/3);
+				*/
 			}
 		}
 	}
@@ -69,20 +70,24 @@ function setup(){
 		grid[Math.floor(event.pageX/hunit)][Math.floor(event.pageY/vunit)] = 0;
 	}
 
+	/*
 	window.onclick = function(){
 		stepFrame();
 		render();
 	};
+	*/
 
 	function update(){
 		stepFrame();
 		render();
 		window.requestAnimationFrame(update);
 	}
-	//window.requestAnimationFrame(update);
+	window.requestAnimationFrame(update);
 
 	function stepFrame(){
-		var transfer = 50;
+		// TODO must make pressure transfer symmetrical. i.e. consider pairs of spaces. only once.
+		var transfer = 1;
+		var loss = .9;
 
 		// make a new grid to hold the changes
 		var gridChanges = [];
@@ -93,11 +98,11 @@ function setup(){
 			}
 		}
 
-
 		for (var i = 0; i < width; i++){
 			for (var j = 0; j < height; j++){
 				var current = grid[i][j];
 				var diffs = [0,0,0,0];
+
 				if (j != 0){
 					// north
 					if(grid[i][j-1] < current){
@@ -133,8 +138,8 @@ function setup(){
 				}
 
 				function applyChanges(ci, cj, ni, nj, d){
-					gridChanges[ni][nj] += scaledDiffs[d];
-					grid[ci][cj] -= scaledDiffs[d];
+					gridChanges[ni][nj] += scaledDiffs[d]*loss;
+					gridChanges[ci][cj] -= scaledDiffs[d]*loss;
 				}
 				
 				if (j != 0){
