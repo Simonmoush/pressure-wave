@@ -29,11 +29,11 @@ function setup(){
 	var ctx = c.getContext("2d");
 
 	var grid = [];
-	var width = 100;
+	var width = 50;
 	var hunit = parseInt(c.width)/width;
-	var height = 100;
+	var height = 50;
 	var vunit = parseInt(c.height)/height;
-	var pressureRange = 1000;
+	var pressureRange = 100;
 
 	for(var i = 0; i < width; i++){
 		grid[i] = [];
@@ -50,11 +50,11 @@ function setup(){
 				ctx.fillStyle = pressureToColor(grid[i][j], pressureRange);
 				ctx.fillRect((i*hunit), (j*vunit), hunit, vunit);
 				
-				/*
-				ctx.font="20px Georgia";
-				ctx.fillStyle = "black";
-				ctx.fillText(""+Math.floor(grid[i][j]), (i*hunit), ((j+1)*vunit)-vunit/3);
-				*/
+				if (false){
+					ctx.font="20px Georgia";
+					ctx.fillStyle = "black";
+					ctx.fillText(""+Math.floor(grid[i][j]), (i*hunit), ((j+1)*vunit)-vunit/3);
+				}
 			}
 		}
 	}
@@ -85,9 +85,7 @@ function setup(){
 	window.requestAnimationFrame(update);
 
 	function stepFrame(){
-		// TODO must make pressure transfer symmetrical. i.e. consider pairs of spaces. only once.
-		var transfer = 1;
-		var loss = .9;
+		var loss = .2;
 
 		// make a new grid to hold the changes
 		var gridChanges = [];
@@ -128,18 +126,9 @@ function setup(){
 					}
 				}
 
-				var diffSum = diffs.reduce(function(accumulator, currentValue){return accumulator+currentValue});
-				var scaledDiffs;
-				if (diffSum > transfer){
-					var diffScale = transfer/diffSum;
-					scaledDiffs = diffs.map(function(x){return x * diffScale});
-				} else{
-					scaledDiffs = diffs;
-				}
-
 				function applyChanges(ci, cj, ni, nj, d){
-					gridChanges[ni][nj] += scaledDiffs[d]*loss;
-					gridChanges[ci][cj] -= scaledDiffs[d]*loss;
+					gridChanges[ni][nj] += (diffs[d]/2)*loss;
+					gridChanges[ci][cj] -= (diffs[d]/2)*loss;
 				}
 				
 				if (j != 0){
