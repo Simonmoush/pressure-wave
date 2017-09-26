@@ -54,8 +54,6 @@ function setup(){
 				ctx.font="20px Georgia";
 				ctx.fillStyle = "black";
 				ctx.fillText(""+Math.floor(grid[i][j]), (i*hunit), ((j+1)*vunit)-vunit/3);
-				
-
 			}
 		}
 	}
@@ -71,26 +69,20 @@ function setup(){
 		grid[Math.floor(event.pageX/hunit)][Math.floor(event.pageY/vunit)] = 0;
 	}
 
-	/*
 	window.onclick = function(){
 		stepFrame();
 		render();
 	};
-	*/
 
 	function update(){
 		stepFrame();
 		render();
 		window.requestAnimationFrame(update);
 	}
-	window.requestAnimationFrame(update);
+	//window.requestAnimationFrame(update);
 
-
-	//TODO figure out how the propagation should happen
 	function stepFrame(){
-		var maxDiff = pressureRange;
-		var rate = .3;
-		var loss = .8;
+		var transfer = 50;
 
 		// make a new grid to hold the changes
 		var gridChanges = [];
@@ -100,35 +92,73 @@ function setup(){
 				gridChanges[i][j] = 0;
 			}
 		}
+
+
 		for (var i = 0; i < width; i++){
 			for (var j = 0; j < height; j++){
-			var current = grid[i][j];
-				if(j != height-1){
-					// south
-					if(grid[i][j+1] < current){
-						gridChanges[i][j+1] += Math.min(rate*(current - grid[i][j+1]), maxDiff)*loss;
-						gridChanges[i][j] -= Math.min(rate*(current - grid[i][j+1]), maxDiff)*loss;
-					}
-				}
+				var current = grid[i][j];
+				var diffs = [0,0,0,0];
 				if (j != 0){
 					// north
 					if(grid[i][j-1] < current){
-						gridChanges[i][j-1] += Math.min(rate*(current - grid[i][j-1]), maxDiff)*loss;
-						gridChanges[i][j] -= Math.min(rate*(current - grid[i][j-1]), maxDiff)*loss;
+						diffs[0] = (current - grid[i][j-1]);
+					}
+				}
+				if(j != height-1){
+					// south
+					if(grid[i][j+1] < current){
+						diffs[1] = (current - grid[i][j+1]);
 					}
 				}
 				if(i != width-1){ 
 					// east
 					if(grid[i+1][j] < current){
-						gridChanges[i+1][j] += Math.min(rate*(current - grid[i+1][j]), maxDiff)*loss;
-						gridChanges[i][j] -= Math.min(rate*(current - grid[i+1][j]), maxDiff)*loss;
+						diffs[2] = (current - grid[i+1][j]);
 					}
 				}
 				if(i != 0){
 					// west
 					if(grid[i-1][j] < current){
-						gridChanges[i-1][j] += Math.min(rate*(current - grid[i-1][j]), maxDiff)*loss;
-						gridChanges[i][j] -= Math.min(rate*(current - grid[i-1][j]), maxDiff)*loss;
+						diffs[3] = (current - grid[i-1][j]);
+					}
+				}
+
+				var diffSum = diffs.reduce(function(accumulator, currentValue){return accumulator+currentValue});
+				var scaledDiffs;
+				if (diffSum > transfer){
+					var diffScale = transfer/diffSum;
+					scaledDiffs = diffs.map(function(x){return x * diffScale});
+				} else{
+					scaledDiffs = diffs;
+				}
+
+				function applyChanges(ci, cj, ni, nj, d){
+					gridChanges[ni][nj] += scaledDiffs[d];
+					grid[ci][cj] -= scaledDiffs[d];
+				}
+				
+				if (j != 0){
+					// north
+					if(grid[i][j-1] < current){
+						applyChanges(i, j, i, j-1, 0);
+					}
+				}
+				if(j != height-1){
+					// south
+					if(grid[i][j+1] < current){
+						applyChanges(i, j, i, j+1, 1);
+					}
+				}
+				if(i != width-1){ 
+					// east
+					if(grid[i+1][j] < current){
+						applyChanges(i, j, i+1, j, 2);
+					}
+				}
+				if(i != 0){
+					// west
+					if(grid[i-1][j] < current){
+						applyChanges(i, j, i-1, j, 3);
 					}
 				}
 			}
