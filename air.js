@@ -21,9 +21,10 @@ function pressureToColor(value, range){
 
 // make it an nonlinear 
 function pressureChangeToColor(linvalue, range){
+	var k = range/500;
 	//s-shaped function
-	//var value = (2*range/(1+Math.pow(Math.E, -1000*linvalue))-range)
-	var value = linvalue;
+	var value = (2*range/(1+Math.pow(Math.E, -(1/(k))*linvalue))-range)
+	//var value = linvalue;
 	var blue = 0;
 	var red = 0;
 	var green = 0;
@@ -51,14 +52,17 @@ function setup(){
 	var ctx = c.getContext("2d");
 
 	var grid = [];
-	var gridMax = 0;
+	var gridMax = .1;
 	var gridChanges = [];
-	var gridChangesMax = 0;
-	var width = 100;
+	var gridChangesMax = .1;
+	var gridChangesCurrentMax = .1;
+	var width = 50;
 	var hunit = parseInt(c.width)/width;
-	var height = 100;
+	var height = 50;
 	var vunit = parseInt(c.height)/height;
 	var pressureRange = 100;
+	var drag = false;
+	var dotSize = 1;
 
 	for(var i = 0; i < width; i++){
 		grid[i] = [];
@@ -87,15 +91,24 @@ function setup(){
 		}
 	}
 
-	c.addEventListener("mousedown", highPressure);
-	c.addEventListener("mouseup", lowPressure);
+	c.addEventListener("mousedown", dragStart);
+	c.addEventListener("mouseup", dragStop);
+	c.addEventListener("mousemove", highPressure);
 
-	
-	var dotSize = 5;
+	function dragStart(){
+		drag = true;
+	}
+
+	function dragStop(){
+		drag = false;
+	}
+
 	function highPressure(event){
-		for(var i = 0; i < dotSize; i++){
-			for(var j = 0; j < dotSize; j++){
-				grid[Math.floor(event.pageX/hunit)+i][Math.floor(event.pageY/vunit)+j] += pressureRange*1;
+		if(drag == true){
+			for(var i = 0; i < dotSize; i++){
+				for(var j = 0; j < dotSize; j++){
+					grid[Math.floor(event.pageX/hunit)+i][Math.floor(event.pageY/vunit)+j] += pressureRange*1;
+				}
 			}
 		}
 	}
@@ -133,7 +146,7 @@ function setup(){
 				gridChanges[i][j] = 0;
 			}
 		}
-		gridChangesMax = 0;
+		gridChangesCurrentMax = 0;
 
 		for (var i = 0; i < width; i++){
 			for (var j = 0; j < height; j++){
@@ -155,7 +168,8 @@ function setup(){
 					// west
 					gridChanges[i][j] += (grid[i-1][j] - current)*loss;
 				}
-				gridChangesMax = Math.max(gridChanges[i][j], gridChangesMax);
+				gridChangesCurrentMax = Math.max(gridChanges[i][j], gridChangesCurrentMax);
+				gridChangesMax = Math.max(gridChangesMax, gridChangesCurrentMax)
 			}
 		}
 		// apply the changes from the gridChanges array to the real grid
