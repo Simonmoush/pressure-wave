@@ -29,9 +29,9 @@ function setup(){
 	var ctx = c.getContext("2d");
 
 	var grid = [];
-	var width = 50;
+	var width = 40;
 	var hunit = parseInt(c.width)/width;
-	var height = 50;
+	var height = 40;
 	var vunit = parseInt(c.height)/height;
 	var pressureRange = 100;
 
@@ -63,11 +63,19 @@ function setup(){
 	c.addEventListener("mouseup", lowPressure);
 
 	function highPressure(event){
-		grid[Math.floor(event.pageX/hunit)][Math.floor(event.pageY/vunit)] = pressureRange;
+		for(var i = 0; i < 10; i++){
+			for(var j = 0; j < 1; j++){
+				grid[Math.floor(event.pageX/hunit)+i][Math.floor(event.pageY/vunit)+j] = pressureRange*.6;
+			}
+		}
 	}
 
 	function lowPressure(event){
-		grid[Math.floor(event.pageX/hunit)][Math.floor(event.pageY/vunit)] = 0;
+		for(var i = 0; i < 10; i++){
+			for(var j = 0; j < 1; j++){
+				grid[Math.floor(event.pageX/hunit)+i][Math.floor(event.pageY/vunit)+j] = pressureRange*.4;
+			}
+		}
 	}
 
 	/*
@@ -85,7 +93,7 @@ function setup(){
 	window.requestAnimationFrame(update);
 
 	function stepFrame(){
-		var loss = .2;
+		var loss = .3;
 
 		// make a new grid to hold the changes
 		var gridChanges = [];
