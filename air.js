@@ -19,6 +19,28 @@ function pressureToColor(value, range){
 	}
 }
 
+// make it an nonlinear 
+function pressureChangeToColor(linvalue, range){
+	//s-shaped function
+	//var value = (2*range/(1+Math.pow(Math.E, -1000*linvalue))-range)
+	var value = linvalue;
+	var blue = 0;
+	var red = 0;
+	var green = 0;
+	if (value > 0){
+		red = 255;
+		blue = value.map(0, range, 255, 0);
+		green = value.map(0, range, 255, 0);
+		return "rgb(" + red + ", " + green + ", " + blue + ")";
+	}else{
+		blue = 255;
+		red = value.map(-1*range, 0, 0, 255);
+		green = value.map(-1*range, 0, 0, 255);
+		return "rgb(" + red + ", " + green + ", " + blue + ")";
+	}
+}
+
+
 function pos(value){
 	if(value > 0) {return value};
 	return 0;
@@ -29,16 +51,19 @@ function setup(){
 	var ctx = c.getContext("2d");
 
 	var grid = [];
-	var width = 40;
+	var gridChanges = [];
+	var width = 100;
 	var hunit = parseInt(c.width)/width;
-	var height = 40;
+	var height = 100;
 	var vunit = parseInt(c.height)/height;
 	var pressureRange = 100;
 
 	for(var i = 0; i < width; i++){
 		grid[i] = [];
+		gridChanges[i] =[];
 		for(var j = 0; j < height; j++){
-		grid[i][j] = pressureRange/2;
+			grid[i][j] = pressureRange/2;
+			gridChanges[i][j] = 0;
 		}
 	}
 
@@ -47,7 +72,8 @@ function setup(){
 		for (var i = 0; i < width; i++){
 			for (var j = 0; j < height; j++){
 
-				ctx.fillStyle = pressureToColor(grid[i][j], pressureRange);
+				//ctx.fillStyle = pressureToColor(grid[i][j], pressureRange);
+				ctx.fillStyle = pressureChangeToColor(gridChanges[i][j], .1);
 				ctx.fillRect((i*hunit), (j*vunit), hunit, vunit);
 				
 				if (false){
@@ -62,20 +88,15 @@ function setup(){
 	c.addEventListener("mousedown", highPressure);
 	c.addEventListener("mouseup", lowPressure);
 
+	
 	function highPressure(event){
-		for(var i = 0; i < 10; i++){
-			for(var j = 0; j < 1; j++){
-				grid[Math.floor(event.pageX/hunit)+i][Math.floor(event.pageY/vunit)+j] = pressureRange*.6;
-			}
-		}
+		grid[Math.floor(event.pageX/hunit)][Math.floor(event.pageY/vunit)] += pressureRange*1;
+		grid[Math.floor(event.pageX/hunit)+20][Math.floor(event.pageY/vunit)+0] -= pressureRange*1;
 	}
 
 	function lowPressure(event){
-		for(var i = 0; i < 10; i++){
-			for(var j = 0; j < 1; j++){
-				grid[Math.floor(event.pageX/hunit)+i][Math.floor(event.pageY/vunit)+j] = pressureRange*.4;
-			}
-		}
+		grid[Math.floor(event.pageX/hunit)][Math.floor(event.pageY/vunit)] -= pressureRange*1;
+		grid[Math.floor(event.pageX/hunit)+20][Math.floor(event.pageY/vunit)+0] += pressureRange*1;
 	}
 
 	/*
@@ -93,10 +114,10 @@ function setup(){
 	window.requestAnimationFrame(update);
 
 	function stepFrame(){
-		var loss = .3;
+		var loss = .1;
 
 		// make a new grid to hold the changes
-		var gridChanges = [];
+		gridChanges = [];
 		for (var i = 0; i < width; i++){
 			gridChanges[i] =[];
 			for (var j = 0; j < height; j++){
@@ -107,65 +128,25 @@ function setup(){
 		for (var i = 0; i < width; i++){
 			for (var j = 0; j < height; j++){
 				var current = grid[i][j];
-				var diffs = [0,0,0,0];
 
 				if (j != 0){
 					// north
-					if(grid[i][j-1] < current){
-						diffs[0] = (current - grid[i][j-1]);
-					}
+					gridChanges[i][j] += (grid[i][j-1] - current)*loss;
 				}
 				if(j != height-1){
 					// south
-					if(grid[i][j+1] < current){
-						diffs[1] = (current - grid[i][j+1]);
-					}
+					gridChanges[i][j] += (grid[i][j+1] - current)*loss;
 				}
 				if(i != width-1){ 
 					// east
-					if(grid[i+1][j] < current){
-						diffs[2] = (current - grid[i+1][j]);
-					}
+					gridChanges[i][j] += (grid[i+1][j] - current)*loss;
 				}
 				if(i != 0){
 					// west
-					if(grid[i-1][j] < current){
-						diffs[3] = (current - grid[i-1][j]);
-					}
-				}
-
-				function applyChanges(ci, cj, ni, nj, d){
-					gridChanges[ni][nj] += (diffs[d]/2)*loss;
-					gridChanges[ci][cj] -= (diffs[d]/2)*loss;
-				}
-				
-				if (j != 0){
-					// north
-					if(grid[i][j-1] < current){
-						applyChanges(i, j, i, j-1, 0);
-					}
-				}
-				if(j != height-1){
-					// south
-					if(grid[i][j+1] < current){
-						applyChanges(i, j, i, j+1, 1);
-					}
-				}
-				if(i != width-1){ 
-					// east
-					if(grid[i+1][j] < current){
-						applyChanges(i, j, i+1, j, 2);
-					}
-				}
-				if(i != 0){
-					// west
-					if(grid[i-1][j] < current){
-						applyChanges(i, j, i-1, j, 3);
-					}
+					gridChanges[i][j] += (grid[i-1][j] - current)*loss;
 				}
 			}
 		}
-
 		// apply the changes from the gridChanges array to the real grid
 		for(var i = 0; i < width; i++){
 			for(var j = 0; j < height; j++){
