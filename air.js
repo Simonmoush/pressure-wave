@@ -51,7 +51,9 @@ function setup(){
 	var ctx = c.getContext("2d");
 
 	var grid = [];
+	var gridMax = 0;
 	var gridChanges = [];
+	var gridChangesMax = 0;
 	var width = 100;
 	var hunit = parseInt(c.width)/width;
 	var height = 100;
@@ -73,7 +75,7 @@ function setup(){
 			for (var j = 0; j < height; j++){
 
 				//ctx.fillStyle = pressureToColor(grid[i][j], pressureRange);
-				ctx.fillStyle = pressureChangeToColor(gridChanges[i][j], .1);
+				ctx.fillStyle = pressureChangeToColor(gridChanges[i][j], gridChangesMax);
 				ctx.fillRect((i*hunit), (j*vunit), hunit, vunit);
 				
 				if (false){
@@ -89,14 +91,21 @@ function setup(){
 	c.addEventListener("mouseup", lowPressure);
 
 	
+	var dotSize = 5;
 	function highPressure(event){
-		grid[Math.floor(event.pageX/hunit)][Math.floor(event.pageY/vunit)] += pressureRange*1;
-		grid[Math.floor(event.pageX/hunit)+20][Math.floor(event.pageY/vunit)+0] -= pressureRange*1;
+		for(var i = 0; i < dotSize; i++){
+			for(var j = 0; j < dotSize; j++){
+				grid[Math.floor(event.pageX/hunit)+i][Math.floor(event.pageY/vunit)+j] += pressureRange*1;
+			}
+		}
 	}
 
 	function lowPressure(event){
-		grid[Math.floor(event.pageX/hunit)][Math.floor(event.pageY/vunit)] -= pressureRange*1;
-		grid[Math.floor(event.pageX/hunit)+20][Math.floor(event.pageY/vunit)+0] += pressureRange*1;
+		for(var i = 0; i < dotSize; i++){
+			for(var j = 0; j < dotSize; j++){
+				grid[Math.floor(event.pageX/hunit)+i][Math.floor(event.pageY/vunit)+j] -= pressureRange*1;
+			}
+		}
 	}
 
 	/*
@@ -124,6 +133,7 @@ function setup(){
 				gridChanges[i][j] = 0;
 			}
 		}
+		gridChangesMax = 0;
 
 		for (var i = 0; i < width; i++){
 			for (var j = 0; j < height; j++){
@@ -145,6 +155,7 @@ function setup(){
 					// west
 					gridChanges[i][j] += (grid[i-1][j] - current)*loss;
 				}
+				gridChangesMax = Math.max(gridChanges[i][j], gridChangesMax);
 			}
 		}
 		// apply the changes from the gridChanges array to the real grid
