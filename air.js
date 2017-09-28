@@ -56,9 +56,9 @@ function setup(){
 	var gridChanges = [];
 	var gridChangesMax = .1;
 	var gridChangesCurrentMax = .1;
-	var width = 50;
+	var width = 100;
 	var hunit = parseInt(c.width)/width;
-	var height = 50;
+	var height = 100;
 	var vunit = parseInt(c.height)/height;
 	var pressureRange = 100;
 	var drag = false;
@@ -176,8 +176,6 @@ function setup(){
 		for(var i = 0; i < width; i++){
 			for(var j = 0; j < height; j++){
 				grid[i][j] += gridChanges[i][j];
-				if(grid[i][j] < 0){ grid[i][j] = 0;}
-				if(grid[i][j] > pressureRange){ grid[i][j] = pressureRange;}
 			}
 		}
 	}
