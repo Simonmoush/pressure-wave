@@ -30,13 +30,13 @@ function pressureChangeToColor(linvalue, range){
 	var green = 0;
 	if (value > 0){
 		red = 255;
-		blue = value.map(0, range, 255, 0);
-		green = value.map(0, range, 255, 0);
+		blue = Math.floor(value.map(0, range, 255, 0));
+		green = Math.floor(value.map(0, range, 255, 0));
 		return "rgb(" + red + ", " + green + ", " + blue + ")";
 	}else{
 		blue = 255;
-		red = value.map(-1*range, 0, 0, 255);
-		green = value.map(-1*range, 0, 0, 255);
+		red = Math.floor(value.map(-1*range, 0, 0, 255));
+		green = Math.floor(value.map(-1*range, 0, 0, 255));
 		return "rgb(" + red + ", " + green + ", " + blue + ")";
 	}
 }
